@@ -109,9 +109,8 @@
             "esri/layers/GraphicsLayer",
             "esri/Graphic",
             "esri/geometry/Point",
-            "esri/tasks/QueryTask",
-            "esri/tasks/support/Query"
-        ], function (Map, MapView, GraphicsLayer, Graphic, Point, QueryTask, Query) {
+            "esri/layers/FeatureLayer" // ← ESTE ES EL NUEVO
+        ], function (Map, MapView, GraphicsLayer, Graphic, Point, FeatureLayer) {
 
             // URL inyectada por Flask desde ARCGIS_FEATURE_LAYER_URL en .env
             const FEATURE_LAYER_URL = "https://services6.arcgis.com/iy5bNdPsZzOtHV8a/arcgis/rest/services/Bicis_demo/FeatureServer/0";
@@ -186,29 +185,31 @@
             //    Campos reales definidos en app.py → /gps → feature["properties"]
             // ─────────────────────────────────────────────────────────────────
 
+           const featureLayer = new FeatureLayer({ url: FEATURE_LAYER_URL });
+
             function actualizarPosiciones() {
-                const query = new Query();
-                query.where = "1=1";  // Traer todos los participantes activos
+                // Ahora creamos la consulta desde la misma capa
+                const query = featureLayer.createQuery();
+                query.where = "1=1";  
                 query.outFields = [
-                    "participante",    // nombre asignado: participante_01 … participante_20
-                    "device_label",    // ej. "Linux-abc12345"
-                    "speed_kmh",       // velocidad en km/h (calculada por cliente o GPS)
-                    "speed_source",    // "gps_sensor" | "calculated_gps_distance_time"
-                    "accuracy",        // precisión GPS en metros
-                    "heading",         // rumbo en grados
-                    "altitude",        // altitud en metros
-                    "accel_magnitude", // magnitud del acelerómetro sin gravedad
-                    "timestamp"        // timestamp del servidor "YYYY-MM-DD HH:MM:SS"
+                    "participante",    
+                    "device_label",    
+                    "speed_kmh",       
+                    "speed_source",    
+                    "accuracy",        
+                    "heading",         
+                    "altitude",        
+                    "accel_magnitude", 
+                    "timestamp"        
                 ];
                 query.returnGeometry = true;
-                // Sistema de referencia coincide con arcgis.py → wkid: 4326 (WGS84)
                 query.outSpatialReference = { wkid: 4326 };
 
-                queryTask.execute(query).then(function (results) {
+                // Ejecutamos la consulta moderna
+                featureLayer.queryFeatures(query).then(function (results) {
                     setStatus("Activo — " + results.features.length + " participante(s) en mapa");
 
                     results.features.forEach(function (feature) {
-                        // Campo real en app.py: properties["participante"]
                         const id = feature.attributes.participante || feature.attributes.Participante;
                         if (!id) return;
 
@@ -216,7 +217,7 @@
                         const attrs    = feature.attributes;
 
                         if (!corredores[id]) {
-                            // ── Primera aparición: crear gráfico ──
+                            // ── Primera aparición ──
                             const color = COLORES_PARTICIPANTES[colorIndex % MAX_PARTICIPANTES];
                             colorIndex++;
 
@@ -242,7 +243,7 @@
                             agregarCardPanel(id, color, attrs);
 
                         } else {
-                            // ── Ya existe: animar hacia la nueva posición ──
+                            // ── Ya existe: animar ──
                             animarPunto(corredores[id], nuevaPos);
                             corredores[id].attrs = attrs;
                             actualizarCardPanel(id, attrs);
