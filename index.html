@@ -114,7 +114,7 @@
         ], function (Map, MapView, GraphicsLayer, Graphic, Point, QueryTask, Query) {
 
             // URL inyectada por Flask desde ARCGIS_FEATURE_LAYER_URL en .env
-            const FEATURE_LAYER_URL = "{{ arcgis_url }}";
+            const FEATURE_LAYER_URL = "https://services6.arcgis.com/iy5bNdPsZzOtHV8a/arcgis/rest/services/Bicis_demo/FeatureServer/0";
 
             // Coincide con ARCGIS_THROTTLE_SECONDS = 5 (config.py)
             // El servidor actualiza ArcGIS cada 5 s → consultamos cada 5 s
@@ -367,7 +367,7 @@
 
     <!-- Panel lateral con lista de corredores -->
     <div id="panel">
-        <h3>🏃 Corredores en vivo</h3>
+        <h3> Corredores en vivo</h3>
         <div id="listaCorredores"></div>
     </div>
 
